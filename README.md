@@ -1,7 +1,7 @@
 # 🤖 AutoCS-RAG: 서버리스 기반 CS AI Copilot 서비스
 
 > **E-Commerce 고객센터 업무 효율화를 위한 서버리스 기반 RAG & Multi-Agent 챗봇**  
-> 사내 규정 문서 및 FAQ 데이터를 바탕으로 고객 문의에 대해 100% 규정에 근거한 신뢰성 높은 답변 템플릿과 출처 조항을 3초 이내에 제공합니다.
+> 사내 규정 문서 및 FAQ 데이터를 바탕으로 고객 문의에 대해 100% 규정에 근거한 신뢰성 높은 답변 템플릿과 출처 조항을 제공합니다.
 
 ---
 
@@ -23,9 +23,9 @@
 [프론트엔드: S3 정적 호스팅 / Streamlit]
           ↓ (HTTP POST)
 [API Gateway + AWS Lambda (FastAPI / Mangum 컨테이너)]
-          ├── (1) 쿼리 임베딩 ────────► [OpenAI text-embedding-3-small]
-          ├── (2) 벡터 검색 ──────────► [AWS S3 Vectors]
-          └── (3) 답변 템플릿 생성 ───► [OpenAI gpt-4o-mini]
+          ├── (1) 쿼리 임베딩 ────────► [로컬 한국어 모델: jhgan/ko-sroberta-multitask]
+          ├── (2) 벡터 검색 ──────────► [AWS S3 Vectors / 로컬 ChromaDB]
+          └── (3) 답변 템플릿 생성 ───► [Google Gemini 2.5 Flash API (무료)]
 ```
 
 ### 🚀 V2 아키텍처 로드맵 (고성능 엔터프라이즈 RAG)
@@ -38,8 +38,10 @@
 ## 🛠️ 3. 기술 스택 (Tech Stack)
 
 * **Language & Framework:** Python 3.11, FastAPI, Mangum
-* **RAG & Agent:** LangChain, LangGraph
-* **Vector DB:** AWS S3 Vectors (V1), Amazon OpenSearch (V2)
+* **RAG Engine & Pipeline:** LangChain (LCEL), LangGraph
+* **Embedding Model:** `jhgan/ko-sroberta-multitask` (100% 로컬 무료 한국어 임베딩)
+* **LLM:** Google Gemini 2.5 Flash (`gemini-2.5-flash`)
+* **Vector DB:** AWS S3 Vectors (V1), Amazon OpenSearch (V2), ChromaDB (Local)
 * **Cache / Session:** Upstash Redis / Valkey
 * **Infra & Serverless:** AWS Lambda (Docker Container), API Gateway, S3
 
@@ -53,9 +55,8 @@ AutoCS-RAG/
 │   ├── 01_refund_policy.md     # 환불 및 교환 규정
 │   └── 02_shipping_policy.md   # 배송 및 주문 가이드
 ├── src/                        # 백엔드 소스 코드
-│   ├── main.py                 # FastAPI 애플리케이션 엔트리포인트
-│   ├── rag_chain.py            # LangChain RAG 파이프라인
-│   └── config.py               # 환경 변수 및 설정
+│   ├── test_local_rag.py       # LCEL 기반 RAG 로컬 실습 스크립트
+│   └── main.py                 # FastAPI 애플리케이션 엔트리포인트 (예정)
 ├── requirements.txt            # 파이썬 의존성 패키지
 ├── .env.example                # 환경 변수 템플릿
 └── README.md                   # 프로젝트 문서
@@ -68,7 +69,7 @@ AutoCS-RAG/
 ### 1) 환경 변수 설정
 ```bash
 cp .env.example .env
-# .env 파일에 OPENAI_API_KEY 입력
+# .env 파일에 GEMINI_API_KEY 입력
 ```
 
 ### 2) 가상환경 생성 및 패키지 설치
@@ -78,11 +79,10 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3) 로컬 서버 실행
+### 3) 로컬 RAG 파이프라인 테스트
 ```bash
-uvicorn src.main:app --reload
+python src/test_local_rag.py
 ```
-* **Swagger UI:** `http://localhost:8000/docs` 접속 후 API 테스트
 
 ---
 
