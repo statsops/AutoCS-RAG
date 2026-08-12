@@ -1,0 +1,26 @@
+# Environment variables (보안 민감 정보)
+.env
+.env.local
+*.env
+
+# Python 가상환경 및 바이너리
+venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Python 바이트코드 및 캐시
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 로컬 Vector DB (ChromaDB 데이터베이스)
+*.chroma
+chroma_db/
+
+# OS / IDE 설정 파일
+.DS_Store
+.vscode/
+.idea/
