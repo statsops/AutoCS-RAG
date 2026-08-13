@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_anthropic import ChatAnthropic
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -13,8 +13,9 @@ from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 # 1. .env 환경 변수 로드
 load_dotenv()
 
-# Google API Key 설정 확인
-api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+# API Key 설정 확인
+#api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+api_key = os.getenv("ANTHROPIC_API_KEY")
 
 def format_docs(docs):
     """검색된 문서들의 텍스트를 하나로 결합합니다."""
@@ -45,7 +46,7 @@ def run_local_rag_demo():
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     print("✅ 한국어 임베딩 및 로컬 Chroma DB 저장 완료.")
 
-    print("\n💬 [4/4] Gemini LLM RAG 질의응답 테스트...")
+    print("\n💬 [4/4] LLM RAG 질의응답 테스트...")
     
     # System Prompt 수정: 유연한 의미 추론 허용 및 친절한 CS 가이드
     system_prompt = (
@@ -61,10 +62,10 @@ def run_local_rag_demo():
         ("human", "{input}"),
     ])
 
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        google_api_key=api_key,
-        temperature=0.1
+    llm = ChatAnthropic(
+        model="claude-sonnet-5",
+        max_tokens=1024,
+        ## no temperature, deterministic by system_prompt
     )
     
     # LCEL 파이프라인
@@ -95,6 +96,6 @@ def run_local_rag_demo():
 
 if __name__ == "__main__":
     if not api_key:
-        print("⚠️ GEMINI_API_KEY가 설정되지 않았습니다. .env 파일을 확인해 주세요.")
+        print("⚠️ ANTHROPIC_API_KEY가 설정되지 않았습니다. .env 파일을 확인해 주세요.")
     else:
         run_local_rag_demo()
