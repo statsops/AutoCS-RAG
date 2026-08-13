@@ -1,12 +1,12 @@
-# 🤖 AutoCS-RAG: 서버리스 기반 CS AI Copilot 서비스
+# 🤖 AutoCS-RAG: 서버리스 기반 CS AI 어시스턴트
 
-> **E-Commerce 고객센터 업무 효율화를 위한 서버리스 기반 RAG & Multi-Agent 챗봇**  
-> 사내 규정 문서 및 FAQ 데이터를 바탕으로 고객 문의에 대해 100% 규정에 근거한 신뢰성 높은 답변 템플릿과 출처 조항을 제공합니다.
+> **E-Commerce 고객센터 업무 효율화를 위한 서버리스 RAG 기반 CS 응대 어시스턴트**  
+> 사내 규정 문서·FAQ를 바탕으로 100% 규정에 근거한 답변 템플릿과 출처 조항을 상담원에게 제공하며, LangGraph 기반 **Multi-Agent 챗봇**으로 확장해 나갈 예정입니다.
 
 <p>
   <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
   <img alt="LangChain" src="https://img.shields.io/badge/LangChain-LCEL-1C3C3C">
-  <img alt="LLM" src="https://img.shields.io/badge/LLM-Gemini%202.5%20Flash-4285F4?logo=google&logoColor=white">
+  <img alt="LLM" src="https://img.shields.io/badge/LLM-Claude%20Sonnet%205-D97757?logo=anthropic&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue">
 </p>
 
@@ -44,7 +44,7 @@
 [API Gateway + AWS Lambda (FastAPI / Mangum 컨테이너)]
           ├── (1) 쿼리 임베딩 ────────► [로컬 한국어 모델: jhgan/ko-sroberta-multitask]
           ├── (2) 벡터 검색 ──────────► [AWS S3 Vectors / 로컬 ChromaDB]
-          └── (3) 답변 템플릿 생성 ───► [Google Gemini 2.5 Flash API (무료)]
+          └── (3) 답변 템플릿 생성 ───► [Anthropic Claude Sonnet 5 API]
 ```
 
 ### 🚀 V2 아키텍처 로드맵 (고성능 엔터프라이즈 RAG)
@@ -61,7 +61,7 @@
 * **Language & Framework:** Python 3.11+, FastAPI, Mangum
 * **RAG Engine & Pipeline:** LangChain (LCEL) — *LangGraph 기반 Multi-Agent는 로드맵*
 * **Embedding Model:** `jhgan/ko-sroberta-multitask` (100% 로컬 무료 한국어 임베딩)
-* **LLM:** Google Gemini 2.5 Flash (`gemini-2.5-flash`)
+* **LLM:** Anthropic Claude Sonnet 5 (`claude-sonnet-5`, via `langchain-anthropic`)
 * **Vector DB:** AWS S3 Vectors (V1), Amazon OpenSearch (V2), ChromaDB (Local)
 * **Cache / Session:** Upstash Redis / Valkey *(로드맵)*
 * **Infra & Serverless:** AWS Lambda (Docker Container), API Gateway, S3
@@ -90,13 +90,13 @@ AutoCS-RAG/
 
 ### 사전 준비물
 * Python **3.11 이상** (개발/검증 환경: 3.12)
-* [Google AI Studio](https://aistudio.google.com/app/apikey)에서 발급받은 **Gemini API Key** (무료 티어 지원)
+* [Anthropic Console](https://console.anthropic.com/)에서 발급받은 **Anthropic API Key** (Claude Sonnet 5는 유료 — 호출 시 과금)
 * 최초 실행 시 임베딩 모델(`ko-sroberta`, 약 440MB)이 자동 다운로드되며, 인터넷 연결이 필요합니다.
 
 ### 1) 환경 변수 설정
 ```bash
 cp .env.example .env
-# .env 파일에 GEMINI_API_KEY 입력
+# .env 파일에 ANTHROPIC_API_KEY 입력
 ```
 
 ### 2) 가상환경 생성 및 패키지 설치
@@ -115,7 +115,7 @@ python src/test_local_rag.py
 
 ## 📊 6. 실행 결과 예시
 
-`test_local_rag.py`는 데이터 로딩 → 청킹(600자) → 로컬 임베딩 및 Chroma 색인 → Gemini 질의응답까지 4단계를 순차 실행합니다.
+`test_local_rag.py`는 데이터 로딩 → 청킹(600자) → 로컬 임베딩 및 Chroma 색인 → Claude 질의응답까지 4단계를 순차 실행합니다.
 
 **입력 질문**
 ```
@@ -128,7 +128,7 @@ python src/test_local_rag.py
 ✅ 총 2개 문서 로드 완료.
 ✂️ [2/4] 문서 청킹(Chunking) 진행 중...
 🧠 [3/4] 로컬 한국어 임베딩 모델(ko-sroberta) 기반 Vector DB(Chroma) 구축 중...
-💬 [4/4] Gemini LLM RAG 질의응답 테스트...
+💬 [4/4] LLM RAG 질의응답 테스트...
 
 🤖 [AI CS 상담원 답변]:
 결론적으로 단순 변심에 의한 환불이 어렵습니다. 착용 흔적이 있는 상품은
