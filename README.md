@@ -3,6 +3,25 @@
 > **E-Commerce 고객센터 업무 효율화를 위한 서버리스 기반 RAG & Multi-Agent 챗봇**  
 > 사내 규정 문서 및 FAQ 데이터를 바탕으로 고객 문의에 대해 100% 규정에 근거한 신뢰성 높은 답변 템플릿과 출처 조항을 제공합니다.
 
+<p>
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
+  <img alt="LangChain" src="https://img.shields.io/badge/LangChain-LCEL-1C3C3C">
+  <img alt="LLM" src="https://img.shields.io/badge/LLM-Gemini%202.5%20Flash-4285F4?logo=google&logoColor=white">
+  <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue">
+</p>
+
+---
+
+## 📑 목차
+1. [프로젝트 개요](#-1-프로젝트-개요)
+2. [시스템 아키텍처](#️-2-시스템-아키텍처)
+3. [기술 스택](#️-3-기술-스택-tech-stack)
+4. [디렉토리 구조](#-4-디렉토리-구조)
+5. [로컬 실행 방법](#-5-로컬-실행-방법)
+6. [실행 결과 예시](#-6-실행-결과-예시)
+7. [성능 및 트레이드오프 분석](#-7-성능-및-트레이드오프-분석)
+8. [라이선스](#-8-라이선스)
+
 ---
 
 ## 📌 1. 프로젝트 개요
@@ -33,16 +52,18 @@
 * **Valkey / Upstash Redis:** Semantic Caching 적용으로 유사 질문 **15ms 내 즉시 응답** 및 비용 95% 단축.
 * **CloudFront:** SSE (Server-Sent Events) 스트리밍 연동으로 **Time To First Token(TTFT) < 1.2초** 달성.
 
+> ℹ️ 현재 저장소에는 **로컬 RAG 파이프라인 데모(V1 코어)** 가 구현되어 있으며, Lambda 배포 및 V2 구성 요소는 로드맵 단계입니다.
+
 ---
 
 ## 🛠️ 3. 기술 스택 (Tech Stack)
 
-* **Language & Framework:** Python 3.11, FastAPI, Mangum
-* **RAG Engine & Pipeline:** LangChain (LCEL), LangGraph
+* **Language & Framework:** Python 3.11+, FastAPI, Mangum
+* **RAG Engine & Pipeline:** LangChain (LCEL) — *LangGraph 기반 Multi-Agent는 로드맵*
 * **Embedding Model:** `jhgan/ko-sroberta-multitask` (100% 로컬 무료 한국어 임베딩)
 * **LLM:** Google Gemini 2.5 Flash (`gemini-2.5-flash`)
 * **Vector DB:** AWS S3 Vectors (V1), Amazon OpenSearch (V2), ChromaDB (Local)
-* **Cache / Session:** Upstash Redis / Valkey
+* **Cache / Session:** Upstash Redis / Valkey *(로드맵)*
 * **Infra & Serverless:** AWS Lambda (Docker Container), API Gateway, S3
 
 ---
@@ -59,12 +80,18 @@ AutoCS-RAG/
 │   └── main.py                 # FastAPI 애플리케이션 엔트리포인트 (예정)
 ├── requirements.txt            # 파이썬 의존성 패키지
 ├── .env.example                # 환경 변수 템플릿
+├── LICENSE                     # Apache License 2.0
 └── README.md                   # 프로젝트 문서
 ```
 
 ---
 
 ## 🚦 5. 로컬 실행 방법
+
+### 사전 준비물
+* Python **3.11 이상** (개발/검증 환경: 3.12)
+* [Google AI Studio](https://aistudio.google.com/app/apikey)에서 발급받은 **Gemini API Key** (무료 티어 지원)
+* 최초 실행 시 임베딩 모델(`ko-sroberta`, 약 440MB)이 자동 다운로드되며, 인터넷 연결이 필요합니다.
 
 ### 1) 환경 변수 설정
 ```bash
@@ -75,7 +102,7 @@ cp .env.example .env
 ### 2) 가상환경 생성 및 패키지 설치
 ```bash
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -86,10 +113,46 @@ python src/test_local_rag.py
 
 ---
 
-## 📊 6. 성능 및 트레이드오프 분석 (README 포인트)
+## 📊 6. 실행 결과 예시
+
+`test_local_rag.py`는 데이터 로딩 → 청킹(600자) → 로컬 임베딩 및 Chroma 색인 → Gemini 질의응답까지 4단계를 순차 실행합니다.
+
+**입력 질문**
+```
+개봉해서 한 번 입어본 옷도 7일 이내면 단순 변심으로 환불되나요?
+```
+
+**출력 (요약)**
+```text
+🚀 [1/4] CS 데이터 문서 로딩 중...
+✅ 총 2개 문서 로드 완료.
+✂️ [2/4] 문서 청킹(Chunking) 진행 중...
+🧠 [3/4] 로컬 한국어 임베딩 모델(ko-sroberta) 기반 Vector DB(Chroma) 구축 중...
+💬 [4/4] Gemini LLM RAG 질의응답 테스트...
+
+🤖 [AI CS 상담원 답변]:
+결론적으로 단순 변심에 의한 환불이 어렵습니다. 착용 흔적이 있는 상품은
+'상품의 가치가 현저히 감소한 경우'(제2조 3항)에 해당하여 청약철회가 제한됩니다...
+
+📄 [검색된 참조 청크 내역]:
+--- [청크 1] 01_refund_policy.md ---
+...
+```
+
+> 답변은 항상 **결론 → 근거 조항 인용 → 참조 청크 출처** 순으로 제공되어, 환각을 방지하고 규정 근거를 추적할 수 있습니다.
+
+---
+
+## 📈 7. 성능 및 트레이드오프 분석
 
 | 항목 | S3 Vectors (V1) | OpenSearch (V2) |
 | :--- | :--- | :--- |
 | **월 고정 비용** | **$0 (유휴 비용 없음)** | ~$200 (Minimum OCU) |
 | **검색 지연시간** | ~250ms | **~25ms** |
 | **검색 방식** | Dense Vector Search | **Hybrid (BM25 + Vector)** |
+
+---
+
+## 📄 8. 라이선스
+
+본 프로젝트는 [Apache License 2.0](LICENSE) 하에 배포됩니다.

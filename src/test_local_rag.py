@@ -1,10 +1,11 @@
+import glob
 import os
 from dotenv import load_dotenv
-from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
@@ -22,8 +23,10 @@ def format_docs(docs):
 def run_local_rag_demo():
     print("🚀 [1/4] CS 데이터 문서 로딩 중...")
     data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
-    loader = DirectoryLoader(data_dir, glob="*.md", loader_cls=TextLoader)
-    docs = loader.load()
+    docs = []
+    for path in sorted(glob.glob(os.path.join(data_dir, "*.md"))):
+        with open(path, encoding="utf-8") as f:
+            docs.append(Document(page_content=f.read(), metadata={"source": path}))
     print(f"✅ 총 {len(docs)}개 문서 로드 완료.")
 
     print("\n✂️ [2/4] 문서 청킹(Chunking) 진행 중 (조항 보존을 위해 600자로 확장)...")
